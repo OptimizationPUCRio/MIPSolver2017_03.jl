@@ -75,11 +75,26 @@ module SolverBrito
         return "sucesso"
     end
 
+    function exporta_model(m,zinf,nodes,integer_solutions,time,global_bound)
+        m.objVal = zinf.resp.obj
+        m.colVal = zinf.resp.vars
+
+
+        m.ext[:status] = zinf.resp.status
+        m.ext[:time] = time
+        m.ext[:nodes] = nodes
+        m.ext[:sol_int] = integer_solutions
+        m.ext[:objBound] = global_bound
+
+        return m
+    end
 
     function branchANDbound(m,solver)
+        tic()
         # Criacao da lista: ###########################################
         lista = Vector{modelo_lista}()
-
+        nodes = Vector{modelo_lista}()
+        integer_solutions = Vector{modelo_lista}()
         # Adicionando primeiro problema, de forma manual: #############
         zinf = modelo_lista()
         zinf.problem = converte_modelo(m)
@@ -173,26 +188,35 @@ module SolverBrito
 
             #Remove o problema original e adiciona os novos ###############
             #Remove
+            push!(nodes,lista[ind_prob])
             deleteat!(lista,ind_prob)
 
             #adiciona
             if poda_lb == "sucesso"
                 push!(lista,novo_lb)
+            elseif typeof(poda_lb) == Float64
+                push!(integer_solutions, novo_lb)
             end
             if poda_ub == "sucesso"
                 push!(lista,novo_ub)
+            elseif typeof(poda_ub) == Float64
+                push!(integer_solutions, novo_ub)
             end
             iter += 1
         end
         if m.objSense == :Max
             zinf.resp.obj = - zinf.resp.obj
         end
+        #=
         if abs(global_bound[2] - global_bound[1]) <= 0.00000005
             status = "Parada por Gap"
         else
             status = "Parada por impedimento de enumeracao da lista"
         end
-        return zinf,status,global_bound, iter
+        =#
+        time = toc()
+        model = exporta_model(m,zinf,nodes,integer_solutions,time,global_bound)
+        return model
     end
 
 end
