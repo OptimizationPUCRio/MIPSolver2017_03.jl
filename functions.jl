@@ -9,6 +9,7 @@ module SolverBrito
         xub
         l
         u
+        vtypes
         solver
     end
 
@@ -39,7 +40,8 @@ module SolverBrito
         xub = copy(md.colUpper)
         rowlb, rowub = JuMP.prepConstrBounds(md)
         solver = md.solver
-        problem = prob_lp(A,c,n,m,xlb,xub,rowlb,rowub,solver)
+        vtypes = md.colCat .!= :Cont
+        problem = prob_lp(A,c,n,m,xlb,xub,rowlb,rowub,vtypes,solver)
         return problem
     end
 
@@ -60,7 +62,7 @@ module SolverBrito
     end
 
 
-    function podas(resp ::resposta_relaxado, global_bound)
+    function podas(resp ::resposta_relaxado, global_bound,vtypes)
 
         #Poda por Inviabilidade###########################
         if(resp.status != :Optimal)
@@ -71,7 +73,7 @@ module SolverBrito
             return "erro"
         end
         #Poda por Otimalidade###############################################
-        if ( sum(abs.(resp.vars - round.(resp.vars))) == 0 )
+        if ( sum(abs.(resp.vars[vtypes] - round.(resp.vars[vtypes]))) == 0)
             return Float64(resp.obj)
         end
         return "sucesso"
@@ -113,7 +115,10 @@ module SolverBrito
             ############################### ###############################
 
             #Select variables #############################################
-            ind = indmax(abs.(lista[ind_prob].resp.vars - round.(lista[ind_prob].resp.vars)))
+            vars = lista[ind_prob].resp.vars
+            ind_int = convert(Array{Int,1},lista[ind_prob].problem.vtypes)
+
+            ind = indmax(abs.(vars.*ind_int - round.(vars.*ind_int)))
             ############################### ###############################
 
             #Branch #######################################################
@@ -130,8 +135,8 @@ module SolverBrito
             ############################### ###############################
 
             #Podas ########################################################
-            poda_lb = podas(resp_lb, global_bound)
-            poda_ub = podas(resp_ub, global_bound)
+            poda_lb = podas(resp_lb, global_bound,prob_lb.vtypes)
+            poda_ub = podas(resp_ub, global_bound,prob_ub.vtypes)
             ############################### ###############################
 
             #Monta problema  ##############################################
@@ -148,10 +153,14 @@ module SolverBrito
             end
 
             novo_ub = 0
-            if (typeof(poda_ub) == Float64)
-                if (typeof(poda_lb) == Float64)
+            if typeof(poda_ub) == Float64
+                if typeof(poda_lb) == Float64
                     if (poda_ub < poda_lb)
                         global_bound[2] = poda_ub
+                        novo_ub = modelo_lista()
+                        novo_ub.problem = prob_ub
+                        novo_ub.resp = resp_ub
+                    else
                         novo_ub = modelo_lista()
                         novo_ub.problem = prob_ub
                         novo_ub.resp = resp_ub
