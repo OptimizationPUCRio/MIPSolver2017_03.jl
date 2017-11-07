@@ -78,13 +78,13 @@ module SolverBrito
     function exporta_model(m,zinf,nodes,integer_solutions,time,global_bound)
         m.objVal = zinf.resp.obj
         m.colVal = zinf.resp.vars
+        m.objBound = global_bound
 
 
         m.ext[:status] = zinf.resp.status
         m.ext[:time] = time
         m.ext[:nodes] = nodes
         m.ext[:sol_int] = integer_solutions
-        m.ext[:objBound] = global_bound
 
         return m
     end
@@ -197,6 +197,7 @@ module SolverBrito
             elseif typeof(poda_lb) == Float64
                 push!(integer_solutions, novo_lb)
             end
+
             if poda_ub == "sucesso"
                 push!(lista,novo_ub)
             elseif typeof(poda_ub) == Float64

@@ -15,8 +15,7 @@ m = Model()
 ############################### ###############################
 ############################### ###############################
 solver= GurobiSolver(OutputFlag=0)
-
-SolverBrito.branchANDbound(m,solver);
+SolverBrito.branchANDbound(m,solver)
 
 #solve(m)
 
