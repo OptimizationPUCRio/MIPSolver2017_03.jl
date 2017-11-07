@@ -9,6 +9,7 @@ module SolverBrito
         xub
         l
         u
+        solver
     end
 
     mutable struct resposta_relaxado
@@ -37,13 +38,14 @@ module SolverBrito
         xlb = copy(md.colLower)
         xub = copy(md.colUpper)
         rowlb, rowub = JuMP.prepConstrBounds(md)
-        problem = prob_lp(A,c,n,m,xlb,xub,rowlb,rowub)
+        solver = md.solver
+        problem = prob_lp(A,c,n,m,xlb,xub,rowlb,rowub,solver)
         return problem
     end
 
 
-    function solve_relax(problema::prob_lp,solver)
-        mod = Model(solver=solver)
+    function solve_relax(problema::prob_lp)
+        mod = Model(solver=problema.solver)
         @variable(mod, x[1:problema.m])
         for i in 1:problema.m
             setlowerbound(x[i], problema.xlb[i])
@@ -89,7 +91,7 @@ module SolverBrito
         return m
     end
 
-    function branchANDbound(m,solver)
+    function SolveMIP(m)
         tic()
         # Criacao da lista: ###########################################
         lista = Vector{modelo_lista}()
@@ -98,7 +100,7 @@ module SolverBrito
         # Adicionando primeiro problema, de forma manual: #############
         zinf = modelo_lista()
         zinf.problem = converte_modelo(m)
-        zinf.resp = solve_relax(zinf.problem,solver)
+        zinf.resp = solve_relax(zinf.problem)
         global_bound = [zinf.resp.obj,+Inf]
         push!(lista,zinf)
         ############################### ###############################
@@ -123,8 +125,8 @@ module SolverBrito
             ############################### ###############################
 
             #Solve das folhas #############################################
-            resp_lb = solve_relax(prob_lb,solver)
-            resp_ub = solve_relax(prob_ub,solver)
+            resp_lb = solve_relax(prob_lb)
+            resp_ub = solve_relax(prob_ub)
             ############################### ###############################
 
             #Podas ########################################################
