@@ -1,6 +1,5 @@
 using JuMP, Gurobi
-include("structs_git.jl")
-include("functions_git.jl")
+include("functions.jl")
 ############################### ###############################
 ############################### ###############################
 ############################### ###############################
@@ -15,7 +14,7 @@ m = Model(solver=GurobiSolver())
 @objective(m,Max, 2x[1] + x[2] - x[3])
 ############################### ###############################
 ############################### ###############################
-
-z, status_branch, bounds, iter = branchANDbound(m)
+solver= GurobiSolver(OutputFlag=0)
+z, status_branch, bounds, iter = SolverBrito.branchANDbound(m,solver)
 
 solve(m)
