@@ -46,19 +46,19 @@ module SolverBrito
     end
 
 
-    function solve_relax(problema::prob_lp)
-        mod = Model(solver=problema.solver)
-        @variable(mod, x[1:problema.m])
-        for i in 1:problema.m
-            setlowerbound(x[i], problema.xlb[i])
-            setupperbound(x[i], problema.xub[i])
+    function solve_relax(modelo::prob_lp)
+        model = Model(solver=modelo.solver)
+        @variable(model, x[1:modelo.m])
+        for i in 1:modelo.m
+            setlowerbound(x[i], modelo.xlb[i])
+            setupperbound(x[i], modelo.xub[i])
         end
-        @constraint(mod, problema.l .<= problema.A*x .<= problema.u)
-        @objective(mod, Min, dot(problema.c,x))
+        @constraint(model, modelo.l .<= modelo.A*x .<= modelo.u)
+        @objective(model, Min, dot(modelo.c,x))
 
-        status = solve(mod)
-        resp = resposta_relaxado(getobjectivevalue(mod),getvalue(x),status)
-        return resp
+        status = solve(model)
+        resposta = resposta_relaxado(getobjectivevalue(model),getvalue(x),status)
+        return resposta
     end
 
 
