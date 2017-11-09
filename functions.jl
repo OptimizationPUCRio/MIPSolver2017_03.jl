@@ -147,42 +147,30 @@ module SolverBrito
                 ############################### ###############################
 
                 #Monta problema  ##############################################
-                novo_LF = 0
-                if typeof(poda_LF) == Float64
-                    global_bound[2] = poda_LF
-                    novo_LF = modelo_lista()
-                    novo_LF.problem = prob_LF
-                    novo_LF.resp = resp_LF
-                elseif poda_LF == "sucesso"
-                    novo_LF = modelo_lista()
-                    novo_LF.problem = prob_LF
-                    novo_LF.resp = resp_LF
-                end
+                #LEFT
+                novo_LF = modelo_lista()
+                novo_LF.problem = prob_LF
+                novo_LF.resp = resp_LF
 
-                novo_RT = 0
+                #RIGHT
+                novo_RT = modelo_lista()
+                novo_RT.problem = prob_RT
+                novo_RT.resp = resp_RT
+            
                 if typeof(poda_RT) == Float64
-                    if typeof(poda_RT) == Float64
-                        if (poda_RT < poda_LF)
+                    if typeof(poda_LF) == Float64
+                        if poda_RT <= poda_LF
                             global_bound[2] = poda_RT
-                            novo_RT = modelo_lista()
-                            novo_RT.problem = prob_RT
-                            novo_RT.resp = resp_RT
                         else
-                            novo_RT = modelo_lista()
-                            novo_RT.problem = prob_RT
-                            novo_RT.resp = resp_RT
+                            global_bound[2] = poda_LF
                         end
                     else
                         global_bound[2] = poda_RT
-                        novo_RT = modelo_lista()
-                        novo_RT.problem = prob_RT
-                        novo_RT.resp = resp_RT
                     end
-                elseif poda_RT == "sucesso"
-                    novo_RT = modelo_lista()
-                    novo_RT.problem = prob_RT
-                    novo_RT.resp = resp_RT
+                elseif typeof(poda_LF) == Float64
+                        global_bound[2] = poda_LF
                 end
+             
                 ############################### ###############################
 
                 #Atualiza Zinf ################################################
