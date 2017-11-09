@@ -92,13 +92,19 @@ module SolverBrito
 
         return m
     end
-
+    
+    function acha_problema(lista)
+        return 1
+    end
+    
     function SolveMIP(m)
         tic()
+    
         # Criacao da lista: ###########################################
         lista = Vector{modelo_lista}()
         nodes = Vector{modelo_lista}()
         integer_solutions = Vector{modelo_lista}()
+    
         # Adicionando primeiro problema, de forma manual: #############
         zinf = modelo_lista()
         zinf.problem = converte_modelo(m)
@@ -111,88 +117,88 @@ module SolverBrito
             while (abs(global_bound[2] - global_bound[1]) >= exp10(-5) && size(lista)[1] != 0)
                 #Seleciona problema  ##########################################
                 # ind_prob = #ind do problema selecionado
-                ind_prob = 1
+                ind_prob = acha_problema(lista)
 
                 ############################### ###############################
 
                 #Select variables #############################################
-                vars = lista[ind_prob].resp.vars
-                ind_int = convert(Array{Int,1},lista[ind_prob].problem.vtypes)
+                X = lista[ind_prob].resp.vars
+                Var_Cont = convert(Array{Int,1},lista[ind_prob].problem.vtypes)
 
-                ind = indmax(abs.(vars.*ind_int - round.(vars.*ind_int)))
+                ind = indmax(abs.(X.*Var_Cont - round.(X.*Var_Cont)))
                 ############################### ###############################
 
                 #Branch #######################################################
-                prob_lb = deepcopy(lista[ind_prob].problem)
-                prob_lb.xlb[ind] = floor(lista[ind_prob].resp.vars[ind]) + 1
+                prob_LF = deepcopy(lista[ind_prob].problem)
+                prob_LF.xlb[ind] = floor(lista[ind_prob].resp.vars[ind]) + 1
 
-                prob_ub = deepcopy(lista[ind_prob].problem)
-                prob_ub.xub[ind] = floor(lista[ind_prob].resp.vars[ind])
+                prob_RT = deepcopy(lista[ind_prob].problem)
+                prob_RT.xub[ind] = floor(lista[ind_prob].resp.vars[ind])
                 ############################### ###############################
 
                 #Solve das folhas #############################################
-                resp_lb = solve_relax(prob_lb)
-                resp_ub = solve_relax(prob_ub)
+                resp_LF = solve_relax(prob_LF)
+                resp_RT = solve_relax(prob_RT)
                 ############################### ###############################
 
                 #Podas ########################################################
-                poda_lb = podas(resp_lb, global_bound,prob_lb.vtypes)
-                poda_ub = podas(resp_ub, global_bound,prob_ub.vtypes)
+                poda_LF = podas(resp_LF, global_bound,prob_LF.vtypes)
+                poda_RT = podas(resp_RT, global_bound,prob_LF.vtypes)
                 ############################### ###############################
 
                 #Monta problema  ##############################################
-                novo_lb = 0
-                if typeof(poda_lb) == Float64
-                    global_bound[2] = poda_lb
-                    novo_lb = modelo_lista()
-                    novo_lb.problem = prob_lb
-                    novo_lb.resp = resp_lb
-                elseif poda_lb == "sucesso"
-                    novo_lb = modelo_lista()
-                    novo_lb.problem = prob_lb
-                    novo_lb.resp = resp_lb
+                novo_LF = 0
+                if typeof(poda_LF) == Float64
+                    global_bound[2] = poda_LF
+                    novo_LF = modelo_lista()
+                    novo_LF.problem = prob_LF
+                    novo_LF.resp = resp_LF
+                elseif poda_LF == "sucesso"
+                    novo_LF = modelo_lista()
+                    novo_LF.problem = prob_LF
+                    novo_LF.resp = resp_LF
                 end
 
-                novo_ub = 0
-                if typeof(poda_ub) == Float64
-                    if typeof(poda_lb) == Float64
-                        if (poda_ub < poda_lb)
-                            global_bound[2] = poda_ub
-                            novo_ub = modelo_lista()
-                            novo_ub.problem = prob_ub
-                            novo_ub.resp = resp_ub
+                novo_RT = 0
+                if typeof(poda_RT) == Float64
+                    if typeof(poda_RT) == Float64
+                        if (poda_RT < poda_LF)
+                            global_bound[2] = poda_RT
+                            novo_RT = modelo_lista()
+                            novo_RT.problem = prob_RT
+                            novo_RT.resp = resp_RT
                         else
-                            novo_ub = modelo_lista()
-                            novo_ub.problem = prob_ub
-                            novo_ub.resp = resp_ub
+                            novo_RT = modelo_lista()
+                            novo_RT.problem = prob_RT
+                            novo_RT.resp = resp_RT
                         end
                     else
-                        global_bound[2] = poda_ub
-                        novo_ub = modelo_lista()
-                        novo_ub.problem = prob_ub
-                        novo_ub.resp = resp_ub
+                        global_bound[2] = poda_RT
+                        novo_RT = modelo_lista()
+                        novo_RT.problem = prob_RT
+                        novo_RT.resp = resp_RT
                     end
-                elseif poda_ub == "sucesso"
-                    novo_ub = modelo_lista()
-                    novo_ub.problem = prob_ub
-                    novo_ub.resp = resp_ub
+                elseif poda_RT == "sucesso"
+                    novo_RT = modelo_lista()
+                    novo_RT.problem = prob_RT
+                    novo_RT.resp = resp_RT
                 end
                 ############################### ###############################
 
                 #Atualiza Zinf ################################################
-                if typeof(poda_lb) == Float64
-                    if novo_lb.resp.obj <= global_bound[2]
-                        zinf = deepcopy(novo_lb)
+                if typeof(poda_LF) == Float64
+                    if novo_LF.resp.obj <= global_bound[2]
+                        zinf = deepcopy(novo_LF)
                     end
                 end
-                if typeof(poda_ub) == Float64
-                    if typeof(poda_lb) == Float64
-                        if novo_ub.resp.obj <= global_bound[2] && novo_ub.resp.obj <= novo_lb.resp.obj
-                            zinf = deepcopy(novo_ub)
+                if typeof(poda_RT) == Float64
+                    if typeof(poda_RT) == Float64
+                        if novo_RT.resp.obj <= global_bound[2] && novo_RT.resp.obj <= novo_LF.resp.obj
+                            zinf = deepcopy(novo_RT)
                         end
                     else
-                        if novo_ub.resp.obj <= global_bound[2]
-                            zinf = deepcopy(novo_ub)
+                        if novo_RT.resp.obj <= global_bound[2]
+                            zinf = deepcopy(novo_RT)
                         end
                     end
                 end
@@ -204,16 +210,16 @@ module SolverBrito
                 deleteat!(lista,ind_prob)
 
                 #adiciona
-                if poda_lb == "sucesso"
-                    push!(lista,novo_lb)
-                elseif typeof(poda_lb) == Float64
-                    push!(integer_solutions, novo_lb)
+                if poda_LF == "sucesso"
+                    push!(lista,novo_LF)
+                elseif typeof(poda_LF) == Float64
+                    push!(integer_solutions, novo_LF)
                 end
 
-                if poda_ub == "sucesso"
-                    push!(lista,novo_ub)
-                elseif typeof(poda_ub) == Float64
-                    push!(integer_solutions, novo_ub)
+                if poda_RT == "sucesso"
+                    push!(lista,novo_RT)
+                elseif typeof(poda_RT) == Float64
+                    push!(integer_solutions, novo_RT)
                 end
                 iter += 1
             end
