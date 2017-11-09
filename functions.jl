@@ -192,7 +192,7 @@ module SolverBrito
                     end
                 end
                 if typeof(poda_RT) == Float64
-                    if typeof(poda_RT) == Float64
+                    if typeof(poda_LF) == Float64
                         if novo_RT.resp.obj <= global_bound[2] && novo_RT.resp.obj <= novo_LF.resp.obj
                             zinf = deepcopy(novo_RT)
                         end
