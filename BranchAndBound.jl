@@ -9,8 +9,8 @@ module SolverBrito
         m
         xlb
         xub
-        l
-        u
+        rowlb
+        rowub
         vtypes
         solver
     end
@@ -24,7 +24,7 @@ module SolverBrito
     end
 
 #--------------------------------------------------------------------------------------------------
-    # Struct que combina o modelo com a resposta 
+    # Struct que combina o modelo com a resposta
     mutable struct modelo_lista
         problem::prob_lp
         resp::resposta_relaxado
@@ -61,7 +61,7 @@ module SolverBrito
             setlowerbound(x[i], modelo.xlb[i])
             setupperbound(x[i], modelo.xub[i])
         end
-        @constraint(model, modelo.l .<= modelo.A*x .<= modelo.u)
+        @constraint(model, modelo.rowlb .<= modelo.A*x .<= modelo.rowub)
         @objective(model, Min, dot(modelo.c,x))
 
         status = solve(model)
@@ -70,7 +70,7 @@ module SolverBrito
     end
 
 #--------------------------------------------------------------------------------------------------
-    # Funcao podas. Recebe a resposta do filho e pode por inviabilidade, limite e otimalidade. 
+    # Funcao podas. Recebe a resposta do filho e pode por inviabilidade, limite e otimalidade.
     function podas(resp ::resposta_relaxado, global_bound,vtypes)
 
         #Poda por Inviabilidade
@@ -123,25 +123,25 @@ module SolverBrito
     #Funcao SOLVEMIP
     function SolveMIP(m)
         tic()
-    
+
         # Cria listas: De problemas, nos encontrados e solucoes inteiras. -------------------------
         lista = Vector{modelo_lista}()
         nodes = Vector{modelo_lista}()
         integer_solutions = Vector{modelo_lista}()
-    
+
         # Adiciona o 1o problema de forma manual na lista. ----------------------------------------
         zinf = modelo_lista()
         zinf.problem = converte_modelo(m)
         zinf.resp = solve_relax(zinf.problem)
         global_bound = [zinf.resp.obj,+Inf]
         push!(lista,zinf)
-        
+
         # Comeca o algoritmo do branch and bound. -------------------------------------------------
         iter = 0
         if sum(zinf.problem.vtypes) != 0 #Esta checando se todas as variaveis ja sao inteiras
-        
+
             while (abs(global_bound[2] - global_bound[1]) >= exp10(-5) && size(lista)[1] != 0 && iter <= 1000) #Para por limite de iteracoes, bound e tamanho da lista
-                
+
                 # Seleciona problema usando a funcao "acha_problema". -----------------------------
                 ind_prob = acha_problema(lista)
 
@@ -162,7 +162,7 @@ module SolverBrito
                 # Podas --------------------------------------------------------------------------
                 poda_LF = podas(resp_LF, global_bound,prob_LF.vtypes)
                 poda_RT = podas(resp_RT, global_bound,prob_LF.vtypes)
-               
+
                 # Monta novas variaveis da struct modelo_lista, prontas para serem adicionadas na lista
                 #LEFT
                 novo_LF = modelo_lista()
@@ -173,8 +173,8 @@ module SolverBrito
                 novo_RT = modelo_lista()
                 novo_RT.problem = prob_RT
                 novo_RT.resp = resp_RT
-                
-                # Olha para as podas e atualiza o global_bound ----------------------------------- 
+
+                # Olha para as podas e atualiza o global_bound -----------------------------------
                 if typeof(poda_RT) == Float64
                     if typeof(poda_LF) == Float64
                         if poda_RT <= poda_LF
@@ -188,7 +188,7 @@ module SolverBrito
                 elseif typeof(poda_LF) == Float64
                         global_bound[2] = poda_LF
                 end
-             
+
                 #Atualiza Zinf (Melhor solucao ate o momento) ----------------------------------
                 if typeof(poda_LF) == Float64
                     if novo_LF.resp.obj <= global_bound[2]
@@ -227,17 +227,17 @@ module SolverBrito
                 iter += 1
             end
         end
-        
+
         # Fim do while, agora verificar model.sense, corrigir caso necessario o z*.
         if m.objSense == :Max
             zinf.resp.obj = - zinf.resp.obj
         end
-    
+
         time = toc() # Registro do tempo
-    
+
         # Usa a funcao exporta_model para compor o modelo final usando a melhor solucao encontrada ate agora.
-        model = exporta_model(m,zinf,nodes,integer_solutions,time,global_bound) 
-    
+        model = exporta_model(m,zinf,nodes,integer_solutions,time,global_bound)
+
         return model
     end
 end
