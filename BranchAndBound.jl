@@ -92,7 +92,7 @@ module SolverBrito
 
 #--------------------------------------------------------------------------------------------------
     # Funcao exporta_model. Recebe o modelo original e atualiza os valores do z*, x, ... , e preenche listas dos nos e solucoes inteiras
-    function exporta_model(m,zinf,nodes,integer_solutions,time,global_bound)
+    function exporta_model(m,zinf,nodes,integer_solutions,time,global_bound,iter)
         m.objVal = zinf.resp.obj
         m.colVal = zinf.resp.vars
         m.objBound = global_bound
@@ -102,6 +102,7 @@ module SolverBrito
         m.ext[:time] = time
         m.ext[:nodes] = nodes
         m.ext[:sol_int] = integer_solutions
+        m.ext[:iter] = iter
 
         return m
     end
@@ -238,7 +239,7 @@ module SolverBrito
         time = toc() # Registro do tempo
 
         # Usa a funcao exporta_model para compor o modelo final usando a melhor solucao encontrada ate agora.
-        model = exporta_model(m,zinf,nodes,integer_solutions,time,global_bound)
+        model = exporta_model(m,zinf,nodes,integer_solutions,time,global_bound,iter)
 
         return model
     end
