@@ -1,4 +1,6 @@
+# Branch and Bound, Eduardo Brito.
 module SolverBrito
+
     using JuMP, Gurobi
 #--------------------------------------------------------------------------------------------------
     # Struct para informacoes de um modelo generico
