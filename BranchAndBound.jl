@@ -55,7 +55,7 @@ module SolverBrito
     end
 
 #--------------------------------------------------------------------------------------------------
-    # Funcao que resolve um modelo do struct "prob_lp", resolve ele, e devolve em forma do struct resp
+    # Funcao que resolve um modelo do struct "prob_lp", e devolve em forma do struct resp
     function solve_relax(modelo::prob_lp)
         model = Model(solver=modelo.solver)
         @variable(model, x[1:modelo.m])
@@ -164,7 +164,7 @@ module SolverBrito
 
                 # Podas --------------------------------------------------------------------------
                 poda_LF = podas(resp_LF, global_bound,prob_LF.vtypes)
-                poda_RT = podas(resp_RT, global_bound,prob_LF.vtypes)
+                poda_RT = podas(resp_RT, global_bound,prob_RT.vtypes)
 
                 # Monta novas variaveis da struct modelo_lista, prontas para serem adicionadas na lista
                 #LEFT
