@@ -100,8 +100,8 @@ module SolverBrito
 
         m.ext[:status] = zinf.resp.status
         m.ext[:time] = time
-        m.ext[:nodes] = nodes
-        m.ext[:sol_int] = integer_solutions
+        m.ext[:nodes] = size(nodes)[1]
+        m.ext[:intsols] = size(integer_solutions)[1]
         m.ext[:iter] = iter
 
         return m
