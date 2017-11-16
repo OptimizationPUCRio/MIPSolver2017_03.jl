@@ -141,9 +141,10 @@ module SolverBrito
 
         # Comeca o algoritmo do branch and bound. -------------------------------------------------
         iter = 0
+        jg_time0 = time_ns()
         if sum(zinf.problem.vtypes) != 0 #Esta checando se todas as variaveis ja sao inteiras
 
-            while (abs(global_bound[2] - global_bound[1]) >= exp10(-5) && size(lista)[1] != 0 && iter <= 1000) #Para por limite de iteracoes, bound e tamanho da lista
+            while (abs(global_bound[2] - global_bound[1]) >= exp10(-5) && size(lista)[1] != 0 && iter <= 1000 && (time_ns()-jg_time0)/1e9 < 180) #Para por limite de iteracoes, bound e tamanho da lista
 
                 # Seleciona problema usando a funcao "acha_problema". -----------------------------
                 ind_prob = acha_problema(lista)
