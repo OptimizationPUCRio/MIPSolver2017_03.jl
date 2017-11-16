@@ -95,7 +95,7 @@ module SolverBrito
     function exporta_model(m,zinf,nodes,integer_solutions,time,global_bound,iter)
         m.objVal = zinf.resp.obj
         m.colVal = zinf.resp.vars
-        m.objBound = abs(global_bound[2] - global_bound[1])
+        m.objBound = abs(global_bound[1]
 
 
         m.ext[:status] = zinf.resp.status
